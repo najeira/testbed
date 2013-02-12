@@ -21,6 +21,7 @@ Example
   	"appengine/datastore"
   	"net/http"
   	"testing"
+  	"github.com/najeira/testbed"
   )
   
   const (
