@@ -3,6 +3,7 @@ package testbed
 import (
 	//"appengine"
 	"appengine_internal"
+	basepb "appengine_internal/base"
 	"appengine_internal/remote_api"
 	"bufio"
 	"bytes"
@@ -21,6 +22,7 @@ type Testbed struct {
 	pipe     *exec.Cmd
 	apiRead  *bufio.Reader
 	apiWrite *bufio.Writer
+	apiErr   *bufio.Reader
 	mu       sync.Mutex
 	cmd      string
 	args     []string
@@ -32,12 +34,12 @@ func NewTestbed(cmd, py string, arg ...string) *Testbed {
 		panic(err)
 	}
 	f.Close()
-	
+
 	carg := []string{py}
 	for _, a := range arg {
 		carg = append(carg, a)
 	}
-	
+
 	t := &Testbed{}
 	t.cmd = cmd
 	t.args = carg
@@ -65,6 +67,12 @@ func (t *Testbed) Start() {
 		panic(err)
 	}
 	t.apiRead = bufio.NewReader(r)
+
+	r, err = t.pipe.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
+	t.apiErr = bufio.NewReader(r)
 
 	if err := t.pipe.Start(); err != nil {
 		panic(err)
@@ -116,7 +124,7 @@ func read(r *bufio.Reader, pb proto.Message) error {
 	if err != nil {
 		return err
 	}
-	s = s[0:len(s)-2] // trim ending \n
+	s = s[0 : len(s)-2] // trim ending \n
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return err
@@ -179,7 +187,17 @@ func (t *Testbed) NewContext(req *http.Request) *context {
 	return &context{req, t}
 }
 
-func (c *context) Call(service, method string, in, out proto.Message, _ *appengine_internal.CallOptions) error {
+func (c *context) Call(service, method string, in, out appengine_internal.ProtoMessage, opts *appengine_internal.CallOptions) error {
+	if service == "__go__" {
+		if method == "GetNamespace" {
+			out.(*basepb.StringProto).Value = proto.String(c.req.Header.Get("X-AppEngine-Current-Namespace"))
+			return nil
+		}
+		if method == "GetDefaultNamespace" {
+			out.(*basepb.StringProto).Value = proto.String(c.req.Header.Get("X-AppEngine-Default-Namespace"))
+			return nil
+		}
+	}
 	data, err := proto.Marshal(in)
 	if err != nil {
 		return err
