@@ -10,6 +10,8 @@ without permanent side effects. The datastore stub for example allows
 to write entities into memory without storing them to the actual
 datastore. This module makes using those stubs for testing easier.
 
+Google App Engine SDK 1.7.5 or higher required.
+
 Example
 =======
 
