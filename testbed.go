@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -124,7 +125,7 @@ func read(r *bufio.Reader, pb proto.Message) error {
 	if err != nil {
 		return err
 	}
-	s = s[0 : len(s)-2] // trim ending \n
+	s = strings.TrimRight(s, "\r\n")
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return err
@@ -151,14 +152,14 @@ func write(w *bufio.Writer, pb proto.Message) error {
 	return w.Flush()
 }
 
-func (t *Testbed) call(service, method string, data []byte) ([]byte, error) {
+func (t *Testbed) call(service, method string, data []byte, requestID string) ([]byte, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-
 	req := &remote_api.Request{
 		ServiceName: &service,
 		Method:      &method,
 		Request:     data,
+		RequestId:   &requestID,
 	}
 	if err := write(t.apiWrite, req); err != nil {
 		return nil, err
@@ -202,7 +203,8 @@ func (c *context) Call(service, method string, in, out appengine_internal.ProtoM
 	if err != nil {
 		return err
 	}
-	res, err := c.t.call(service, method, data)
+	requestID := c.req.Header.Get("X-Appengine-Internal-Request-Id")
+	res, err := c.t.call(service, method, data, requestID)
 	if err != nil {
 		return err
 	}
@@ -227,6 +229,5 @@ func (c *context) Criticalf(format string, args ...interface{}) { c.logf("CRITIC
 // This may contain a partition prefix (e.g. "s~" for High Replication apps),
 // or a domain prefix (e.g. "example.com:").
 func (c *context) FullyQualifiedAppID() string {
-	//return c.req.Header.Get("X-AppEngine-Inbound-AppId")
 	return "testbed-test"
 }
