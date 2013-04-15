@@ -52,6 +52,45 @@ Example
   }
 
 
+Note
+====
+
+To use testbed with 1.7.6+, apply a patch to `appengine_internal/api_dev.go`.
+
+::
+
+  56,60c56,68
+  < 	instanceConfig.AppID = string(c.AppId)
+  < 	instanceConfig.APIPort = int(*c.ApiPort)
+  < 	instanceConfig.VersionID = string(c.VersionId)
+  < 	instanceConfig.InstanceID = *c.InstanceId
+  < 	instanceConfig.Datacenter = *c.Datacenter
+  ---
+  > 	if c != nil {
+  > 		instanceConfig.AppID = string(c.AppId)
+  > 		instanceConfig.APIPort = int(*c.ApiPort)
+  > 		instanceConfig.VersionID = string(c.VersionId)
+  > 		instanceConfig.InstanceID = *c.InstanceId
+  > 		instanceConfig.Datacenter = *c.Datacenter
+  > 	} else {
+  > 		instanceConfig.AppID = "app"
+  > 		instanceConfig.APIPort = 54321
+  > 		instanceConfig.VersionID = "version"
+  > 		instanceConfig.InstanceID = "abc3dzac4"
+  > 		instanceConfig.Datacenter = "us1"
+  > 	}
+  121a130,132
+  > 	if len(raw) == 0 {
+  > 		return nil
+  > 	}
+  247c258,259
+  < func init() { os.DisableWritesForAppEngine = true }
+  \ No newline at end of file
+  ---
+  >
+  > // func init() { os.DisableWritesForAppEngine = true }  
+
+
 License
 =======
 
