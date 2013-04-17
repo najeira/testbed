@@ -1,7 +1,6 @@
 package testbed
 
 import (
-	//"appengine"
 	"appengine_internal"
 	basepb "appengine_internal/base"
 	"appengine_internal/remote_api"
@@ -11,12 +10,12 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
-	//"net/http/httptest"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Testbed struct {
@@ -83,10 +82,30 @@ func (t *Testbed) Start() {
 func (t *Testbed) Close() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.pipe != nil {
-		t.pipe.Process.Kill()
-		t.pipe = nil
+	if t.pipe == nil {
+		return
 	}
+	t.mu.Unlock()
+	t.quit()
+	t.mu.Lock()
+	donec := make(chan error)
+	go func() {
+		donec <- t.pipe.Wait()
+	}()
+	select {
+	case <-time.After(3 * time.Second):
+		t.pipe.Process.Kill()
+	case <-donec:
+		// ok
+	}
+	t.pipe = nil
+}
+
+func (t *Testbed) quit() error {
+	if err := t.writeString("#quit#"); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *Testbed) Reset() error {

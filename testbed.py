@@ -64,18 +64,16 @@ def main():
   while 1:
     line = sys.stdin.readline()
     stripped = line.strip()
+    logging.debug(stripped)
     
     if stripped == "#reset#":
-      logging.debug(stripped)
       testbed_server.tearDown()
       testbed_server.setUp()
       
     elif stripped == "#quit#":
-      logging.debug(stripped)
-      break
+      return
       
     elif stripped:
-      logging.debug(stripped)
       req = base64.b64decode(stripped)
       _, req = req.split("\n", 1) # discard a first row
       resp = process(req)
@@ -83,6 +81,9 @@ def main():
       sys.stdout.write(resp)
       sys.stdout.write("\n")
       sys.stdout.flush()
+    
+    else:
+      return
 
 if __name__ == "__main__":
   main()
