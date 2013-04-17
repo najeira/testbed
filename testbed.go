@@ -88,7 +88,7 @@ func (t *Testbed) Close() {
 	t.mu.Unlock()
 	t.quit()
 	t.mu.Lock()
-	donec := make(chan error)
+	donec := make(chan error, 1) // non block chan
 	go func() {
 		donec <- t.pipe.Wait()
 	}()
