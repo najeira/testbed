@@ -55,7 +55,7 @@ Example
 Note
 ====
 
-To use testbed with 1.7.6+, apply a patch to `appengine_internal/api_dev.go`.
+To use testbed with 1.7.6 - 1.8.4, apply a patch to `appengine_internal/api_dev.go`.
 
 ::
 
