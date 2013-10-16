@@ -1,3 +1,10 @@
+Note
+====
+
+Google App Engine 1.8.6 supports unittest by appengine/aetest package.
+Use appengine/aetest.
+
+
 testbed
 =======
 
@@ -11,6 +18,7 @@ to write entities into memory without storing them to the actual
 datastore. This module makes using those stubs for testing easier.
 
 Google App Engine SDK 1.7.5 or higher required.
+
 
 Example
 =======
